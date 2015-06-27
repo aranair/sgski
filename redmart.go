@@ -9,10 +9,14 @@ import (
 )
 
 type Node struct {
-	xAxis  int32
-	yAxis  int32
-	Value  int32
-	Trails []Node
+	xAxis int32
+	yAxis int32
+	Value int32
+	Trail []int32
+}
+
+type NodeMap struct {
+	m [][]Node
 }
 
 func main() {
@@ -30,6 +34,8 @@ func main() {
 
 	// Construct 2d array of nodes
 	m := make([][]Node, rowCount)
+	nm := NodeMap{m: m}
+
 	for r := range m {
 		rowStr, _ := reader.ReadString('\n')
 		rowArr := s.Split(trimLine(rowStr), " ")
@@ -41,30 +47,61 @@ func main() {
 
 	for r := range m {
 		for c := range m[r] {
-			m[r][c].fillNode()
+			nm.fillNode(r, c)
 		}
 	}
 }
 
-func (n *Node) fillNode(m [][]Node) {
-	// top
-	if n.xAxis != 0 {
-	}
-	// bottom
-	if n.xAxis == len(m) {
+func getTrail(m *[][]Node, r, c int32) {
+}
+
+func (nm *NodeMap) fillNode(r, c int32) {
+	m := nm.m
+	n := m[r][c]
+
+	var trail []int32
+
+	// not top-most
+	if n.xAxis > 0 {
+		top := m[r-1][c]
+		if top.Value < n.Value && top.Trail == nil {
+			trails = append(trails, m.fillNode(r-1, c))
+		}
 	}
 
-	// left
+	// not bottom-most
+	if n.xAxis == len(m) {
+		bottom := m[r+1][c]
+		if bottom.Value < n.Value && bottom.Trail == nil {
+			trails = append(trails, m.fillNode(r+1, c))
+		}
+	}
+
+	// not left-most
 	if n.yAxis == 0 {
+		left := m[r][c-1]
+		if left.Value < n.Value && left.Trail == nil {
+			trails = append(trails, m.fillNode(r, c-1))
+		}
 	}
-	// right
+
+	// not right-most
 	if n.yAxis == len(m[0])-1 {
+		right := m[r][c+1]
+
+		if right.Value < n.Value && right.Trail == nil {
+			trails = append(trails, m.fillNode(r, c+1))
+		}
 	}
+
+	// pick best trail
+	return trail
 }
 
 func NewNode(s string, x, y int32) Node {
 	intVal, _ := strconv.Atoi(s)
 	return Node{
+		Trail: nil,
 		Value: int32(intVal),
 		xAxis: x,
 		yAxis: y,

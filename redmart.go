@@ -57,7 +57,7 @@ func main() {
 	fmt.Println(findBest(trails))
 }
 
-func (nm *NodeMap) getNextTrail(curr *Node, r, c int) []int32 {
+func (nm *NodeMap) goNext(curr *Node, r, c int) []int32 {
 	m := nm.m
 
 	// Out of bounds
@@ -67,34 +67,25 @@ func (nm *NodeMap) getNextTrail(curr *Node, r, c int) []int32 {
 	}
 
 	next := m[r][c]
-
-	if next.Value < curr.Value && next.Trail == nil {
-		return nm.fillNode(r, c)
+	if next.Value < curr.Value {
+		if next.Trail == nil {
+			return nm.fillNode(r, c)
+		} else {
+			return next.Trail // already visited
+		}
 	}
 	return nil
 }
 
 func (nm *NodeMap) fillNode(r, c int) []int32 {
 	m := nm.m
-
-	// Out of bounds
-	if r < 0 || r > len(m)-1 ||
-		c < 0 || c > len(m[0])-1 {
-		return nil
-	}
-
 	n := m[r][c]
 
-	// Visited
-	if n.Trail != nil {
-		return n.Trail
-	}
-
 	trails := make([][]int32, 4)
-	trails = append(trails, nm.getNextTrail(&n, r-1, c)) // up
-	trails = append(trails, nm.getNextTrail(&n, r+1, c)) // down
-	trails = append(trails, nm.getNextTrail(&n, r, c-1)) // left
-	trails = append(trails, nm.getNextTrail(&n, r, c+1)) // right
+	trails = append(trails, nm.goNext(&n, r-1, c)) // up
+	trails = append(trails, nm.goNext(&n, r+1, c)) // down
+	trails = append(trails, nm.goNext(&n, r, c-1)) // left
+	trails = append(trails, nm.goNext(&n, r, c+1)) // right
 
 	totalLen := 0
 	for _, t := range trails {

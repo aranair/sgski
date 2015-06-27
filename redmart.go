@@ -21,13 +21,9 @@ type NodeMap struct {
 }
 
 func main() {
-	// 4 4
-	// 4 8 7 3
-	// 2 5 9 3
-	// 6 3 2 5
-	// 4 4 1 6
-
-	reader := bufio.NewReader(os.Stdin)
+	// Read inputs
+	f, _ := os.Open("bigmap")
+	reader := bufio.NewReader(f)
 	metaStr, _ := reader.ReadString('\n')
 	meta := s.Split(trimLine(metaStr), " ")
 	rowCount, _ := strconv.Atoi(meta[0])
@@ -36,8 +32,6 @@ func main() {
 	// Construct 2d array of nodes
 	m := make([][]Node, rowCount)
 	nm := NodeMap{m: m}
-
-	// Building Nodes
 	for r := range m {
 		rowStr, _ := reader.ReadString('\n')
 		rowArr := s.Split(trimLine(rowStr), " ")
@@ -92,6 +86,7 @@ func (nm *NodeMap) fillNode(r, c int) []int32 {
 		totalLen += len(t)
 	}
 
+	// Finds best trail AND cache it
 	if totalLen == 0 {
 		// leaf, return [self.value]
 		n.Trail = make([]int32, 1)

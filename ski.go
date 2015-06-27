@@ -42,13 +42,19 @@ func main() {
 	}
 
 	// Filling Nodes
-	var trails [][]int32
+	var bestTrail []int32
 	for r := range m {
 		for c := range m[r] {
-			trails = append(trails, nm.fillNode(r, c))
+			t := nm.fillNode(r, c)
+			if len(bestTrail) == 0 || isBetterTrail(bestTrail, t) {
+				bestTrail = t
+			}
 		}
 	}
-	fmt.Println(findBest(trails))
+
+	fmt.Println(bestTrail)
+	fmt.Println(len(bestTrail))
+	fmt.Println(calcDesc(bestTrail))
 }
 
 func (nm *NodeMap) goNext(curr *Node, r, c int) []int32 {
@@ -86,25 +92,30 @@ func (nm *NodeMap) fillNode(r, c int) []int32 {
 		totalLen += len(t)
 	}
 
-	// Finds best trail AND cache it
+	// Cache best trail
 	if totalLen == 0 {
-		// leaf, return [self.value]
+		// leaf, cache [self.value] and return
 		n.Trail = make([]int32, 1)
 		n.Trail[0] = n.Value
 	} else {
-		// Find best trail from up/down/left/right trails
+		// non-leaf, Cache best trail and return
 		n.Trail = append(findBest(trails), n.Value)
 	}
 
 	return n.Trail
 }
 
+// Compares 2 trails and see which is better
+func isBetterTrail(t1 []int32, t2 []int32) bool {
+	return (len(t1) < len(t2) ||
+		(len(t1) == len(t2) && calcDesc(t1) < calcDesc(t2)))
+}
+
 // Longest Path, or if same length more descend
 func findBest(trails [][]int32) (bestTrail []int32) {
 	for _, ts := range trails {
 		if len(ts) > 0 &&
-			(len(bestTrail) == 0 || len(bestTrail) < len(ts) ||
-				(len(bestTrail) == len(ts) && calcDesc(bestTrail) < calcDesc(ts))) {
+			(len(bestTrail) == 0 || isBetterTrail(bestTrail, ts)) {
 			bestTrail = ts
 		}
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -9,8 +10,8 @@ import (
 )
 
 type Node struct {
-	xAxis int32
-	yAxis int32
+	xAxis int
+	yAxis int
 	Value int32
 	Trail []int32
 }
@@ -36,6 +37,7 @@ func main() {
 	m := make([][]Node, rowCount)
 	nm := NodeMap{m: m}
 
+	// Building Nodes
 	for r := range m {
 		rowStr, _ := reader.ReadString('\n')
 		rowArr := s.Split(trimLine(rowStr), " ")
@@ -45,60 +47,99 @@ func main() {
 		}
 	}
 
+	// Filling Nodes
+	var trails [][]int32
 	for r := range m {
 		for c := range m[r] {
-			nm.fillNode(r, c)
+			trails = append(trails, nm.fillNode(r, c))
 		}
 	}
+	fmt.Println(findBest(trails))
 }
 
-func getTrail(m *[][]Node, r, c int32) {
-}
-
-func (nm *NodeMap) fillNode(r, c int32) {
+func (nm *NodeMap) getNextTrail(curr *Node, r, c int) []int32 {
 	m := nm.m
+
+	// Out of bounds
+	if r < 0 || r > len(m)-1 ||
+		c < 0 || c > len(m[0])-1 {
+		return nil
+	}
+
+	next := m[r][c]
+
+	if next.Value < curr.Value && next.Trail == nil {
+		return nm.fillNode(r, c)
+	}
+	return nil
+}
+
+func (nm *NodeMap) fillNode(r, c int) []int32 {
+	m := nm.m
+
+	// Out of bounds
+	if r < 0 || r > len(m)-1 ||
+		c < 0 || c > len(m[0])-1 {
+		return nil
+	}
+
 	n := m[r][c]
 
-	var trail []int32
-
-	// not top-most
-	if n.xAxis > 0 {
-		top := m[r-1][c]
-		if top.Value < n.Value && top.Trail == nil {
-			trails = append(trails, m.fillNode(r-1, c))
-		}
+	// Visited
+	if n.Trail != nil {
+		return n.Trail
 	}
 
-	// not bottom-most
-	if n.xAxis == len(m) {
-		bottom := m[r+1][c]
-		if bottom.Value < n.Value && bottom.Trail == nil {
-			trails = append(trails, m.fillNode(r+1, c))
-		}
+	trails := make([][]int32, 4)
+	trails = append(trails, nm.getNextTrail(&n, r-1, c)) // up
+	trails = append(trails, nm.getNextTrail(&n, r+1, c)) // down
+	trails = append(trails, nm.getNextTrail(&n, r, c-1)) // left
+	trails = append(trails, nm.getNextTrail(&n, r, c+1)) // right
+
+	totalLen := 0
+	for _, t := range trails {
+		totalLen += len(t)
 	}
 
-	// not left-most
-	if n.yAxis == 0 {
-		left := m[r][c-1]
-		if left.Value < n.Value && left.Trail == nil {
-			trails = append(trails, m.fillNode(r, c-1))
-		}
+	if totalLen == 0 {
+		// leaf, return [self.value]
+		n.Trail = make([]int32, 1)
+		n.Trail[0] = n.Value
+	} else {
+		// Find best trail from up/down/left/right trails
+		n.Trail = append(findBest(trails), n.Value)
 	}
 
-	// not right-most
-	if n.yAxis == len(m[0])-1 {
-		right := m[r][c+1]
-
-		if right.Value < n.Value && right.Trail == nil {
-			trails = append(trails, m.fillNode(r, c+1))
-		}
-	}
-
-	// pick best trail
-	return trail
+	return n.Trail
 }
 
-func NewNode(s string, x, y int32) Node {
+// Longest Path, or if same length more descend
+func findBest(trails [][]int32) (bestTrail []int32) {
+	for _, ts := range trails {
+		if len(ts) > 0 &&
+			(len(bestTrail) == 0 || len(bestTrail) < len(ts) ||
+				(len(bestTrail) == len(ts) && calcDesc(bestTrail) < calcDesc(ts))) {
+			bestTrail = ts
+		}
+	}
+	return
+}
+
+func calcDesc(a []int32) int32 {
+	var smallest, biggest int32 = a[0], -1
+
+	for _, v := range a {
+		if v > biggest {
+			biggest = v
+		}
+		if v < smallest {
+			smallest = v
+		}
+	}
+	return biggest - smallest
+}
+
+func NewNode(s string, x, y int) Node {
 	intVal, _ := strconv.Atoi(s)
 	return Node{
 		Trail: nil,

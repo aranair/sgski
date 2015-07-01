@@ -41,7 +41,7 @@ func main() {
 		}
 	}
 
-	// Filling Nodes
+	// Fill nodes one by one and store the best trail
 	var bestTrail []int32
 	for r := range m {
 		for c := range m[r] {
